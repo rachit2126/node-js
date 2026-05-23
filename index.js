@@ -10,7 +10,7 @@ const app = express();
 
 
 // Middleware
-app.use(cors());
+app.use(cors(origin = "*"));
 
 app.use(express.json());
 
@@ -30,6 +30,10 @@ mongoose.connect(
 });
 
 
+app.get("/", (req, res) => {
+  res.send("Backend Running");
+});
+
 // Routes
 app.use("/users", userRoutes);
 
@@ -39,9 +43,7 @@ app.use("/orders", orderRoutes);
 
 
 // Home Route
-app.get("/", (req, res) => {
-  res.send("Backend Running");
-});
+
 
 
 // Server
