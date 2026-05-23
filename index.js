@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+require("dotenv").config();
 
 const userRoutes = require("./routes/users");
 const productRoutes = require("./routes/products");
@@ -8,45 +9,41 @@ const orderRoutes = require("./routes/orders");
 
 const app = express();
 
-
-// Middleware
-app.use(cors(origin = "*"));
+// MIDDLEWARE
+app.use(cors());
 
 app.use(express.json());
 
+// MONGODB
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log(
+      "MongoDB Connected"
+    );
+  })
+  .catch((err) => {
+    console.log(err);
+  });
 
-// MongoDB Connection
-mongoose.connect(
-  "mongodb+srv://rachit:1agGyt3mJA3RUHLr@cluster0.m3c0as6.mongodb.net/mydb",
-  {
-    family: 4,
-  }
-)
-.then(() => {
-  console.log("MongoDB Connected");
-})
-.catch((err) => {
-  console.log(err);
-});
-
-
+// HOME
 app.get("/", (req, res) => {
   res.send("Backend Running");
 });
 
-// Routes
+// ROUTES
 app.use("/users", userRoutes);
 
 app.use("/products", productRoutes);
 
 app.use("/orders", orderRoutes);
 
+// SERVER
+const PORT =
+  process.env.PORT || 3002;
 
-// Home Route
-
-
-
-// Server
-app.listen(3002, () => {
-  console.log("Server Running on port 3002");
+app.listen(PORT, () => {
+  console.log(
+    `Server Running on ${PORT}`
+  );
 });
