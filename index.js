@@ -10,13 +10,17 @@ const orderRoutes = require("./routes/orders");
 const app = express();
 
 // MIDDLEWARE
-app.use(cors());
+app.use(
+  cors({
+    origin: "*",
+  })
+);
 
 app.use(express.json());
 
 // MONGODB
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect("mongodb+srv://rachit:1agGyt3mJA3RUHLr@cluster0.m3c0as6.mongodb.net/mydb")
   .then(() => {
     console.log(
       "MongoDB Connected"
