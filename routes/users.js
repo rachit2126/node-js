@@ -1,135 +1,186 @@
 const express = require("express");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const router = express.Router();
 
 const User = require("../models/User");
 
+const authMiddleware = require(
+  "../middleware/authMiddleware"
+);
 
-// ================= GET USERS =================
-router.get("/", async (req, res) => {
+// REGISTER
+router.post(
+  "/register",
+  async (req, res) => {
 
-  try {
+    try {
 
-    const users = await User.find();
+      const {
+        name,
+        email,
+        password,
+      } = req.body;
 
-    res.json(users);
+      const existingUser =
+        await User.findOne({
+          email,
+        });
 
-  } catch (error) {
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "User already exists",
+        });
+      }
 
-    res.status(500).json({
-      message: error.message,
-    });
+      const hashedPassword =
+        await bcrypt.hash(
+          password,
+          10
+        );
 
-  }
+      const user = new User({
+        name,
+        email,
+        password:
+          hashedPassword,
+      });
 
-});
+      await user.save();
 
+      res.status(201).json({
+        success: true,
+        message:
+          "User Registered",
+      });
 
-// ================= GET SINGLE USER =================
-router.get("/:id", async (req, res) => {
+    } catch (error) {
 
-  try {
+      res.status(500).json({
+        success: false,
+        message:
+          error.message,
+      });
 
-    const user = await User.findById(
-      req.params.id
-    );
-
-    res.json(user);
-
-  } catch (error) {
-
-    res.status(500).json({
-      message: error.message,
-    });
-
-  }
-
-});
-
-
-// ================= ADD USER =================
-router.post("/", async (req, res) => {
-
-  try {
-
-    const newUser = new User(req.body);
-
-    await newUser.save();
-
-    res.json({
-      success: true,
-      message: "User Added",
-      data: newUser,
-    });
-
-  } catch (error) {
-
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    }
 
   }
+);
 
-});
+// LOGIN
+router.post(
+  "/login",
+  async (req, res) => {
 
+    try {
 
-// ================= UPDATE USER =================
-router.patch("/:id", async (req, res) => {
+      const {
+        email,
+        password,
+      } = req.body;
 
-  try {
+      const user =
+        await User.findOne({
+          email,
+        });
 
-    const updatedUser =
-      await User.findByIdAndUpdate(
-        req.params.id,
-        req.body,
-        {
-          new: true,
-        }
-      );
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "User Not Found",
+        });
+      }
 
-    res.json({
-      success: true,
-      message: "User Updated",
-      data: updatedUser,
-    });
+      const isMatch =
+        await bcrypt.compare(
+          password,
+          user.password
+        );
 
-  } catch (error) {
+      if (!isMatch) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Invalid Password",
+        });
+      }
 
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+      const token =
+        jwt.sign(
+          {
+            id: user._id,
+            email:
+              user.email,
+          },
+          process.env
+            .JWT_SECRET,
+          {
+            expiresIn:
+              "7d",
+          }
+        );
+
+      res.json({
+        success: true,
+        message:
+          "Login Successful",
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email:
+            user.email,
+        },
+      });
+
+    } catch (error) {
+
+      res.status(500).json({
+        success: false,
+        message:
+          error.message,
+      });
+
+    }
 
   }
+);
 
-});
+// PROTECTED PROFILE
+router.get(
+  "/profile",
+  authMiddleware,
+  async (req, res) => {
 
+    try {
 
-// ================= DELETE USER =================
-router.delete("/:id", async (req, res) => {
+      const user =
+        await User.findById(
+          req.user.id
+        ).select(
+          "-password"
+        );
 
-  try {
+      res.json({
+        success: true,
+        user,
+      });
 
-    await User.findByIdAndDelete(
-      req.params.id
-    );
+    } catch (error) {
 
-    res.json({
-      success: true,
-      message: "User Deleted",
-    });
+      res.status(500).json({
+        success: false,
+        message:
+          error.message,
+      });
 
-  } catch (error) {
-
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    }
 
   }
-
-});
-
+);
 
 module.exports = router;
