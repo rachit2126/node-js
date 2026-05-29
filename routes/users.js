@@ -42,12 +42,13 @@ router.post(
           10
         );
 
-      const user = new User({
-        name,
-        email,
-        password:
-          hashedPassword,
-      });
+   const user = new User({
+  name,
+  email,
+  password: hashedPassword,
+  role: "user",
+  active: true,
+});
 
       await user.save();
 
@@ -71,6 +72,8 @@ router.post(
 );
 
 // LOGIN
+ 
+ 
 router.post(
   "/login",
   async (req, res) => {
@@ -88,41 +91,63 @@ router.post(
         });
 
       if (!user) {
+
         return res.status(404).json({
           success: false,
           message:
             "User Not Found",
         });
+
       }
 
-      const isMatch =
-        await bcrypt.compare(
-          password,
-          user.password
+      let isMatch = false;
+
+      // BCRYPT PASSWORD CHECK
+      try {
+
+        isMatch =
+          await bcrypt.compare(
+            password,
+            user.password
+          );
+
+      } catch (err) {
+
+        isMatch = false;
+
+      }
+
+      // OLD BASE64 PASSWORD CHECK
+      const oldPasswordMatch =
+        user.password ===
+        Buffer.from(password).toString(
+          "base64"
         );
 
-      if (!isMatch) {
+      if (
+        !isMatch &&
+        !oldPasswordMatch
+      ) {
+
         return res.status(400).json({
           success: false,
           message:
             "Invalid Password",
         });
+
       }
 
-      const token =
-        jwt.sign(
-          {
-            id: user._id,
-            email:
-              user.email,
-          },
-          process.env
-            .JWT_SECRET,
-          {
-            expiresIn:
-              "7d",
-          }
-        );
+      const token = jwt.sign(
+        {
+          id: user._id,
+          email: user.email,
+        },
+        process.env.JWT_SECRET ||
+          "secretkey",
+        {
+          expiresIn: "7d",
+        }
+      );
 
       res.json({
         success: true,
@@ -132,8 +157,11 @@ router.post(
         user: {
           id: user._id,
           name: user.name,
-          email:
-            user.email,
+          email: user.email,
+          role:
+            user.role || "user",
+          active:
+            user.active !== false,
         },
       });
 
@@ -149,6 +177,8 @@ router.post(
 
   }
 );
+
+
 
 // PROTECTED PROFILE
 router.get(
