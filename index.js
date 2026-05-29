@@ -1,4 +1,3 @@
- 
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -10,32 +9,40 @@ const orderRoutes = require("./routes/orders");
 
 const app = express();
 
-app.use(cors());
+// MIDDLEWARE
+app.use(
+  cors({
+    origin: "*",
+  })
+);
+
 app.use(express.json());
 
-// MongoDB
-mongoose
-  .connect(
- " mongodb+srv://rachit:1agGyt3mJA3RUHLr@cluster0.m3c0as6.mongodb.net/mydb"
-  )
+// MONGODB
+ 
+ mongoose
+  .connect("mongodb+srv://rachit:1agGyt3mJA3RUHLr@cluster0.m3c0as6.mongodb.net/mydb")
   .then(() => {
-    console.log("MongoDB Connected");
+    console.log(
+      "MongoDB Connected"
+    );
   })
   .catch((err) => {
-    console.error(
-      "MongoDB Error:",
-      err
-    );
+    console.log(err);
   });
-
+// HOME
 app.get("/", (req, res) => {
   res.send("Backend Running");
 });
 
+// ROUTES
 app.use("/users", userRoutes);
+
 app.use("/products", productRoutes);
+
 app.use("/orders", orderRoutes);
 
+// SERVER
 const PORT =
   process.env.PORT || 3002;
 
