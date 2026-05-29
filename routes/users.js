@@ -33,72 +33,69 @@ res.status(500).json({
 
 router.post("/register", async (req, res) => {
 
-try {
+  try {
 
- 
-const {
-  name,
-  email,
-  password,
-} = req.body;
+    console.log("BODY:", req.body);
 
-const existingUser =
-  await User.findOne({
-    email,
-  });
+    const {
+      name,
+      email,
+      password,
+    } = req.body;
 
-if (existingUser) {
+    const existingUser =
+      await User.findOne({ email });
 
-  return res.status(400).json({
-    success: false,
-    message:
-      "User already exists",
-  });
+    if (existingUser) {
 
-}
+      return res.status(400).json({
+        success: false,
+        message: "User already exists",
+      });
 
-const hashedPassword =
-  await bcrypt.hash(
-    password,
-    10
-  );
+    }
 
-const user = new User({
-  name,
-  email,
-  password:
-    hashedPassword,
-  role:
-    email ===
-    "admin@gmail.com"
-      ? "admin"
-      : "user",
-  active: true,
-});
+    const hashedPassword =
+      await bcrypt.hash(password, 10);
 
-await user.save();
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role:
+        email === "admin@gmail.com"
+          ? "admin"
+          : "user",
+      active: true,
+    });
 
-res.status(201).json({
-  success: true,
-  message:
-    "User Registered",
-  user,
-});
- 
+    const savedUser =
+      await user.save();
 
-} catch (error) {
+    console.log(
+      "USER SAVED:",
+      savedUser
+    );
 
- 
-console.log(error);
+    res.status(201).json({
+      success: true,
+      message: "User Registered",
+      user: savedUser,
+    });
 
-res.status(500).json({
-  success: false,
-  message:
-    error.message,
-});
- 
+  } catch (error) {
 
-}
+    console.error(
+      "REGISTER ERROR:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
 
 });
 
