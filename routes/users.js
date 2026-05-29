@@ -11,6 +11,27 @@ const authMiddleware = require(
 );
 
 // REGISTER
+// GET ALL USERS
+router.get("/", async (req, res) => {
+
+  try {
+
+    const users = await User
+      .find()
+      .select("-password");
+
+    res.json(users);
+
+  } catch (error) {
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+
+});
 router.post(
   "/register",
   async (req, res) => {
@@ -118,11 +139,21 @@ router.post(
       }
 
       // OLD BASE64 PASSWORD CHECK
-      const oldPasswordMatch =
-        user.password ===
-        Buffer.from(password).toString(
-          "base64"
-        );
+    let oldPasswordMatch = false;
+
+try {
+
+  oldPasswordMatch =
+    user.password ===
+    Buffer.from(password).toString(
+      "base64"
+    );
+
+} catch (err) {
+
+  oldPasswordMatch = false;
+
+}
 
       if (
         !isMatch &&
