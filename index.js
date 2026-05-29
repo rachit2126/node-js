@@ -20,7 +20,7 @@ app.use(express.json());
 
 // MONGODB
  
-mongoose
+ mongoose
   .connect("mongodb+srv://rachit:1agGyt3mJA3RUHLr@cluster0.m3c0as6.mongodb.net/mydb")
   .then(() => {
     console.log(
