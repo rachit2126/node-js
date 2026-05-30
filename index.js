@@ -19,13 +19,20 @@ app.use(
 app.use(express.json());
 
 // MONGODB
- mongoose
-  .connect("mongodb+srv://rachit:1agGyt3mJA3RUHLr@cluster0.m3c0as6.mongodb.net/mydb")
+ 
+
+mongoose
+  .connect("mongodb+srv://rachit:1agGyt3mJA3RUHLr@cluster0.m3c0as6.mongodb.net/mydb", {
+    serverSelectionTimeoutMS: 5000,
+  })
   .then(() => {
     console.log("MongoDB Connected");
   })
   .catch((err) => {
-    console.log(err);
+    console.error(
+      "MongoDB Error:",
+      err
+    );
   });
 // HOME
 app.get("/", (req, res) => {
